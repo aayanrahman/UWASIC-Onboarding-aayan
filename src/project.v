@@ -37,6 +37,21 @@ module tt_um_uwasic_onboarding_aayan (
     .pwm_duty_cycle(pwm_duty_cycle),
     .out({uio_out, uo_out})
   );
+
+  // 1. Connect the SPI pins (ui_in[2:0]) to your SPI module
+  spi_peripheral spi_inst (
+    .clk     (clk),
+    .rst_n   (rst_n),
+    .sclk    (ui_in[0]), // SCLK
+    .copi    (ui_in[1]), // COPI
+    .ncs     (ui_in[2]), // nCS
+    .reg_0x00(en_reg_out_7_0),
+    .reg_0x01(en_reg_out_15_8),
+    .reg_0x02(en_reg_pwm_7_0),
+    .reg_0x03(en_reg_pwm_15_8),
+    .reg_0x04(pwm_duty_cycle)
+  );
+
   // Add uio_in and ui_in[7:3] to the list of unused signals:
   wire _unused = &{ena, ui_in[7:3], uio_in, 1'b0};
 
