@@ -2,40 +2,43 @@
 
 module spi_peripheral (
     input  wire       clk,
-    input  wire       rst_n,
+    input  wire       rst_n,      // Should be treated as asynchronous
     input  wire       sclk,
     input  wire       copi,
     input  wire       ncs,
-    output reg [7:0] reg_0x00,
-    output reg [7:0] reg_0x01,
-    output reg [7:0] reg_0x02,
-    output reg [7:0] reg_0x03,
-    output reg [7:0] reg_0x04
+    output reg [7:0]  reg_0x00,
+    output reg [7:0]  reg_0x01,
+    output reg [7:0]  reg_0x02,
+    output reg [7:0]  reg_0x03,
+    output reg [7:0]  reg_0x04
 );
 
-  // --- Clock Domain Crossing (CDC) Synchronization ---
-  // You need to synchronize ncs, sclk, and copi to the 'clk' domain 
-  // using a 2-stage flip-flop chain to avoid metastability.
-  
-  // --- Edge Detection ---
-  // Detect the falling edge of ncs and rising edge of sclk in the 'clk' domain.
+  // Synchronizers for CDC
+  reg [2:0] sclk_sync, ncs_sync, copi_sync;
 
-  // --- SPI State Machine / Shift Register ---
-  // 1. On ncs falling edge, start a transaction.
-  // 2. On sclk rising edge, shift in 16 bits (RW bit + 7 Address bits + 8 Data bits).
-  // 3. When 16 bits are received, if RW == 1, write 'data' to the 'address'.
+  // Transaction state
+  reg [15:0] shift_reg;
+  reg [3:0] bit_counter;
 
-  // Example register update logic:
-  always @(posedge clk) begin
+  // Use (posedge clk or negedge rst_n) to fix the SYNCASYNCNET error
+  always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-      reg_0x00 <= 8'h00;
-      reg_0x01 <= 8'h00;
-      reg_0x02 <= 8'h00;
-      reg_0x03 <= 8'h00;
-      reg_0x04 <= 8'h00;
+      // Reset logic
+      sclk_sync <= 0;
+      ncs_sync  <= 3'b111;
+      copi_sync <= 0;
+      reg_0x00  <= 0;
+      reg_0x01  <= 0;
+      reg_0x02  <= 0;
+      reg_0x03  <= 0;
+      reg_0x04  <= 0;
     end else begin
-      // Transaction logic goes here...
+      // Sample inputs for CDC
+      sclk_sync <= {sclk_sync[1:0], sclk};
+      ncs_sync  <= {ncs_sync[1:0], ncs};
+      copi_sync <= {copi_sync[1:0], copi};
+
+      // Implement your SPI logic here using the synced signals...
     end
   end
-
 endmodule
